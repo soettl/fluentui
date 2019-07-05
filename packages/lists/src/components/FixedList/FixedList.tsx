@@ -77,11 +77,42 @@ function getMaterializedItemsCount(materializedRanges: ItemRange[]): number {
   return materializedItemsCount;
 }
 
+// tslint:disable-next-line:no-any
+function useCache<T>(deps?: any[]): Map<string, T> {
+  const cache = React.useRef<{ initialized: boolean; items: Map<string, T> | undefined }>({
+    initialized: false,
+    items: undefined
+  });
+  if (!cache.current.initialized) {
+    cache.current.items = new Map<string, T>();
+  }
+
+  React.useEffect(() => {
+    if (cache.current.initialized) {
+      cache.current.items!.clear();
+    }
+
+    cache.current.initialized = true;
+  }, deps);
+
+  return cache.current.items!;
+}
+
 /**
  * A simple virtualized List component which assumes that all its items have the same height.
  */
 export const FixedList = React.memo((props: IFixedListProps) => {
-  const { itemCount, itemHeight, onRenderItem, viewportState, onItemsRendered, enableHardwareAccelleration = true } = props;
+  const {
+    itemCount,
+    itemHeight,
+    onRenderItem,
+    viewportState,
+    viewportHeight,
+    overscanHeight,
+    surfaceTop,
+    onItemsRendered,
+    enableHardwareAccelleration = true
+  } = props;
   const { isScrolling } = viewportState;
 
   const visibleItemRange = getVisibleItemRange(props);
@@ -100,14 +131,17 @@ export const FixedList = React.memo((props: IFixedListProps) => {
 
   const children = new Array(materializedItemsCount);
 
+  const itemStyleCache = useCache<React.CSSProperties>([viewportHeight, overscanHeight, itemHeight, surfaceTop]);
+
   let childIndex = 0;
   for (const materializedRange of materializedItemRanges) {
     const [startIndex, endIndex] = materializedRange;
 
     for (let i = startIndex; i < endIndex; i++) {
-      children[childIndex] = onRenderItem({
-        index: i,
-        style: {
+      const itemStyleKey = `${i};${itemHeight}`;
+      let itemStyle = itemStyleCache.get(itemStyleKey);
+      if (!itemStyle) {
+        itemStyle = {
           position: 'absolute',
           width: '100%',
           height: `${itemHeight}px`,
@@ -117,7 +151,14 @@ export const FixedList = React.memo((props: IFixedListProps) => {
           transform: enableHardwareAccelleration ? `translate(0, ${i * itemHeight}px)` : undefined,
 
           top: !enableHardwareAccelleration ? i * itemHeight : undefined
-        }
+        };
+
+        itemStyleCache.set(itemStyleKey, itemStyle);
+      }
+
+      children[childIndex] = onRenderItem({
+        index: i,
+        style: itemStyle!
       });
 
       childIndex++;
