@@ -34,7 +34,7 @@ function getScrollDirection(scrollDistance: number, prevScrollDistance: number):
  * doesn't mutate on every render.
  */
 export const Viewport = (props: IViewportProps): JSX.Element => {
-  const { height, width, children } = props;
+  const { height, width, children, enableHardwareAccelleration = true } = props;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -100,7 +100,9 @@ export const Viewport = (props: IViewportProps): JSX.Element => {
     overflow: 'auto',
 
     // Enable momentum-based scrolling for iOS browsers
-    WebkitOverflowScrolling: 'touch'
+    WebkitOverflowScrolling: 'touch',
+
+    willChange: enableHardwareAccelleration ? 'transform' : undefined
   };
 
   return (
