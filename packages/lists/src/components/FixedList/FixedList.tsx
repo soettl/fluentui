@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ScrollDirection, Axis } from '../Viewport/Viewport.types';
-import { IFixedListProps, ItemRange, ItemRangeIndex } from './FixedList.types';
+import { IFixedListProps, ItemRange } from './FixedList.types';
 
 const MIN_OVERSCAN_COUNT = 1;
 const TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING = 1;
@@ -28,32 +28,33 @@ function getVisibleItemRange(props: IFixedListProps): ItemRange {
  * @param props The FixedList props
  * @return The currently visible range of items plus overscan
  */
-function getMaterializedItemRanges(props: IFixedListProps): ItemRange[] {
-  const { viewportState, overscanHeight, onModifyMaterializedRanges, itemHeight, itemCount } = props;
+function getMaterializedItemRanges(props: IFixedListProps, visibleRange: ItemRange): ItemRange[] {
+  const { viewportState, overscanHeight, itemHeight, itemCount, onGetMaterializedRanges } = props;
 
   const { isScrolling, scrollDirection } = viewportState;
-
-  const itemRange = getVisibleItemRange(props);
 
   // Add item overscan. Inspired by react-window, we overscan in a given direction only when the user is not scrolling or
   // when the overscan direction equals the scroll direction.
   // https://github.com/bvaughn/react-window/blob/729f621fb0b127ecec8ce71e1d0952920006658c/src/createListComponent.js#L506
-  const overscanCount = Math.min(Math.ceil(overscanHeight / itemHeight), MIN_OVERSCAN_COUNT);
+  const overscanCount = Math.max(Math.ceil(overscanHeight / itemHeight), MIN_OVERSCAN_COUNT);
   const overscanBehind =
     !isScrolling || scrollDirection[Axis.Y] === ScrollDirection.backward ? overscanCount : TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING;
   const overscanAhead =
     !isScrolling || scrollDirection[Axis.Y] === ScrollDirection.forward ? overscanCount : TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING;
 
-  const [startIndex, endIndex] = itemRange;
-  itemRange[ItemRangeIndex.startIndex] = Math.max(0, startIndex - overscanBehind);
-  itemRange[ItemRangeIndex.endIndex] = Math.min(itemCount, endIndex + overscanAhead);
+  const [startIndex, endIndex] = visibleRange;
 
-  // Construct final materialized ranges
-  const materializedRanges = [itemRange];
+  const materializedRange: ItemRange = [Math.max(0, startIndex - overscanBehind), Math.min(itemCount, endIndex + overscanAhead)];
+  let materializedRanges: ItemRange[] | undefined;
 
   // Modify materialized ranges (e.g. for currently focused item that is out of view)
-  if (onModifyMaterializedRanges) {
-    onModifyMaterializedRanges(materializedRanges);
+  if (onGetMaterializedRanges) {
+    materializedRanges = onGetMaterializedRanges({
+      visibleRange,
+      materializedRange
+    });
+  } else {
+    materializedRanges = [visibleRange];
   }
 
   return materializedRanges;
@@ -80,27 +81,43 @@ function getMaterializedItemsCount(materializedRanges: ItemRange[]): number {
  * A simple virtualized List component which assumes that all its items have the same height.
  */
 export const FixedList = React.memo((props: IFixedListProps) => {
-  const { itemCount, itemHeight, onRenderItem, viewportState } = props;
+  const { itemCount, itemHeight, onRenderItem, viewportState, onItemsRendered, enableHardwareAccelleration = true } = props;
   const { isScrolling } = viewportState;
 
-  const materializedRanges = getMaterializedItemRanges(props);
-  const materializedItemsCount = getMaterializedItemsCount(materializedRanges);
+  const visibleItemRange = getVisibleItemRange(props);
+  const materializedItemRanges = getMaterializedItemRanges(props, visibleItemRange);
+
+  const materializedItemsCount = getMaterializedItemsCount(materializedItemRanges);
+
+  React.useEffect(() => {
+    if (onItemsRendered) {
+      onItemsRendered({
+        visibleRange: visibleItemRange,
+        materializedRanges: materializedItemRanges
+      });
+    }
+  });
 
   const children = new Array(materializedItemsCount);
 
   let childIndex = 0;
-  for (const materializedRange of materializedRanges) {
+  for (const materializedRange of materializedItemRanges) {
     const [startIndex, endIndex] = materializedRange;
 
-    for (let i = startIndex; i <= endIndex; i++) {
-      children[childIndex] = onRenderItem(i, {
-        position: 'absolute',
-        width: '100%',
-        height: `${itemHeight}px`,
+    for (let i = startIndex; i < endIndex; i++) {
+      children[childIndex] = onRenderItem({
+        index: i,
+        style: {
+          position: 'absolute',
+          width: '100%',
+          height: `${itemHeight}px`,
 
-        // Use a 'translate' transformation instead of positioning via 'top' in order to use GPU accelleration and to
-        // enable smooth transitions if an element's position changes
-        transform: `translate(0, ${i * itemHeight}px)`
+          // Use a 'translate' transformation instead of positioning via 'top' in order to use GPU accelleration and to
+          // enable smooth transitions if an element's position changes
+          transform: enableHardwareAccelleration ? `translate(0, ${i * itemHeight}px)` : undefined,
+
+          top: !enableHardwareAccelleration ? i * itemHeight : undefined
+        }
       });
 
       childIndex++;
@@ -110,6 +127,7 @@ export const FixedList = React.memo((props: IFixedListProps) => {
   const style: React.CSSProperties = {
     position: 'relative',
     height: `${itemCount * itemHeight}px`,
+    width: '100%',
 
     // Similar to react-window, we disable pointer events while scrolling to improve perf
     pointerEvents: isScrolling ? 'none' : undefined

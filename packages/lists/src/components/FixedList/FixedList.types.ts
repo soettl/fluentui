@@ -10,7 +10,17 @@ export enum ItemRangeIndex {
   endIndex = 1
 }
 
-export type ModifyMaterializedRangesCallback = (materializedRanges: ItemRange[]) => void;
+export type OnGetMaterializedRangesCallback = (props: { visibleRange: ItemRange; materializedRange: ItemRange }) => ItemRange[];
+
+export interface IOnRenderItemProps {
+  index: number;
+  style: React.CSSProperties;
+}
+
+export interface IOnItemsRenderedProps {
+  visibleRange: ItemRange;
+  materializedRanges: ItemRange[];
+}
 
 export interface IFixedListProps {
   /**
@@ -51,11 +61,15 @@ export interface IFixedListProps {
   /**
    * Callback used to render an item with the given index.
    */
-  onRenderItem: (itemIndex: number, style: React.CSSProperties) => JSX.Element | null;
+  onRenderItem: (props: IOnRenderItemProps) => JSX.Element | null;
+
+  onItemsRendered?: (props: IOnItemsRenderedProps) => void;
 
   /**
    * Callback used to modify the list's calculated materialized range, for example in order to always render
    * a focused item, no matter whether it is currently in view or not.
    */
-  onModifyMaterializedRanges?: ModifyMaterializedRangesCallback;
+  onGetMaterializedRanges?: OnGetMaterializedRangesCallback;
+
+  enableHardwareAccelleration?: boolean;
 }
