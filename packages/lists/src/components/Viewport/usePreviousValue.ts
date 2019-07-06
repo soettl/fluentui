@@ -13,7 +13,7 @@ export function usePreviousValue<T>(value: T): T | undefined {
   return ref.current;
 }
 
-export function usePrevious<T>(value: T): React.MutableRefObject<T | undefined> {
+export function usePreviousValueRef<T>(value: T): React.MutableRefObject<T | undefined> {
   const ref = useRef<T | undefined>();
   useEffect(() => {
     ref.current = value;

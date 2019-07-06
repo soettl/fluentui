@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useDebouncedTimeout } from './useDebouncedTimeout';
-import { usePrevious } from './usePreviousValue';
+import { usePreviousValueRef } from './usePreviousValue';
 
 import { Vector2D, ScrollDirection, Axis, IViewportProps, IViewportState } from './Viewport.types';
 
@@ -43,7 +43,7 @@ export const Viewport = (props: IViewportProps): JSX.Element => {
     scrollDistance: SCROLL_DISTANCE_ORIGIN,
     scrollDirection: NO_SCROLL_DIRECTION
   });
-  const prevViewportState = usePrevious(viewportState);
+  const prevViewportStateRef = usePreviousValueRef(viewportState);
 
   const [scheduleStoppedScrollingTimeout, clearStoppedScrollingTimeout] = useDebouncedTimeout(() => {
     setViewportState((currentViewportState: IViewportState) => {
@@ -61,13 +61,15 @@ export const Viewport = (props: IViewportProps): JSX.Element => {
         // tslint:disable-next-line:no-any
         const { scrollLeft: scrollX, scrollTop: scrollY } = ((event as any) as React.UIEvent<HTMLDivElement>).currentTarget;
 
+        const prevViewportState = prevViewportStateRef.current;
+
         const scrollDirectionX = getScrollDirection(
           scrollX,
-          (prevViewportState.current && prevViewportState.current.scrollDistance[Axis.X]) || SCROLL_DISTANCE_ORIGIN[Axis.X]
+          (prevViewportState && prevViewportState.scrollDistance[Axis.X]) || SCROLL_DISTANCE_ORIGIN[Axis.X]
         );
         const scrollDirectionY = getScrollDirection(
           scrollY,
-          (prevViewportState.current && prevViewportState.current.scrollDistance[Axis.Y]) || SCROLL_DISTANCE_ORIGIN[Axis.Y]
+          (prevViewportState && prevViewportState.scrollDistance[Axis.Y]) || SCROLL_DISTANCE_ORIGIN[Axis.Y]
         );
 
         setViewportState({
