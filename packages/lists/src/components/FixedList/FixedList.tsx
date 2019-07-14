@@ -54,7 +54,7 @@ function getMaterializedItemRanges(props: IFixedListProps, visibleRange: ItemRan
       materializedRange
     });
   } else {
-    materializedRanges = [visibleRange];
+    materializedRanges = [materializedRange];
   }
 
   return materializedRanges;
@@ -117,7 +117,6 @@ export const FixedList = React.memo((props: IFixedListProps) => {
 
   const visibleItemRange = getVisibleItemRange(props);
   const materializedItemRanges = getMaterializedItemRanges(props, visibleItemRange);
-
   const materializedItemsCount = getMaterializedItemsCount(materializedItemRanges);
 
   React.useEffect(() => {
@@ -138,7 +137,7 @@ export const FixedList = React.memo((props: IFixedListProps) => {
     const [startIndex, endIndex] = materializedRange;
 
     for (let i = startIndex; i < endIndex; i++) {
-      const itemStyleKey = `${i};${itemHeight}`;
+      const itemStyleKey = i.toString();
       let itemStyle = itemStyleCache.get(itemStyleKey);
       if (!itemStyle) {
         itemStyle = {
