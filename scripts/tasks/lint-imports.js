@@ -157,7 +157,7 @@ module.exports = function() {
       console.log('!!!!!!!!!!!!!!!!!!!!!!!!!');
     }
 
-    if (reportFilePathErrors(importErrors.pathNotFile, importErrors.pathRelative)) {
+    if (reportFilePathErrors(importErrors.pathNotFile, 0)) {
       return Promise.reject('Errors in imports were found!');
     }
 
@@ -306,18 +306,6 @@ module.exports = function() {
       console.error('-------------------------------------');
       for (const filePath in pathNotFile.matches) {
         console.error(`  ${filePath}: ${chalk.inverse(pathNotFile.matches[filePath])}`);
-      }
-    }
-
-    if (pathRelative.count) {
-      console.error(
-        `${chalk.red('ERROR')}: ${
-          pathRelative.count
-        } Example files are using relative imports. For example portability, please ensure that the following imports are absolute:`
-      );
-      console.error('-------------------------------------');
-      for (const filePath in pathRelative.matches) {
-        console.error(`  ${filePath}: ${chalk.inverse(pathRelative.matches[filePath])}`);
       }
     }
 

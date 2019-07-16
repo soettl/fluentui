@@ -7,7 +7,14 @@ export const AppDefinition: IAppDefinition = {
   testPages: [],
   examplePages: [
     {
-      links: []
+      links: [
+        {
+          component: require<any>('../components/DetailsList/DetailsListPage').DetailsListPage,
+          key: 'DetailsList',
+          name: 'DetailsList',
+          url: '#/examples/detailslist'
+        }
+      ]
     }
   ],
   headerLinks: [

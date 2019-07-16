@@ -467,7 +467,7 @@
     {
       "packageName": "@uifabric/lists",
       "projectFolder": "packages/lists",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@uifabric/tsx-editor",
