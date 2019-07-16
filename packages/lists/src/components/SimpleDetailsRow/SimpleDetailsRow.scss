@@ -1,0 +1,278 @@
+@import '~office-ui-fabric-react/src/common/common';
+
+// Default
+$defaultHeaderText: $ms-color-neutralPrimary;
+$defaultMetaText: $ms-color-neutralSecondary;
+$defaultBackground: $ms-color-white;
+
+// Default Hover
+$defaultHoverHeaderText: $ms-color-neutralDark;
+$defaultHoverMetaText: $ms-color-neutralPrimary;
+$defaultHoverBackground: $ms-color-neutralLighter;
+
+// Selected
+$selectedHeaderText: $ms-color-neutralDark;
+$selectedMetaText: $ms-color-neutralPrimary;
+$selectedBackground: $ms-color-neutralLight;
+
+// Selected Hover
+$selectedHoverHeaderText: $ms-color-neutralDark;
+$selectedHoverMetaText: $ms-color-neutralPrimary;
+$selectedHoverBackground: $ms-color-neutralQuaternaryAlt;
+
+// Focus
+$focusHeaderText: $ms-color-neutralDark;
+$focusMetaText: $ms-color-neutralPrimary;
+$focusBackground: $ms-color-neutralLight;
+$focusHoverBackground: $ms-color-neutralQuaternaryAlt;
+
+$rowVerticalPadding: 11;
+$compactRowVerticalPadding: 6;
+
+$cellLeftPadding: 12;
+$cellRightPadding: 8;
+$cellExtraRightPadding: 24;
+
+$cellCheckWidth: 48;
+
+$rowHeight: 42;
+$compactRowHeight: 32;
+
+.root {
+  width: 100%;
+  display: flex;
+
+  border-bottom: 1px solid $ms-color-neutralLighter;
+  background: $defaultBackground;
+  color: $defaultMetaText;
+  min-width: 100%;
+  white-space: nowrap;
+  padding: 0;
+  box-sizing: border-box;
+  vertical-align: top;
+  text-align: left;
+
+  &:hover {
+    background: $defaultHoverBackground;
+    color: $defaultHoverMetaText;
+
+    .isRowHeader {
+      color: $defaultHoverHeaderText;
+    }
+
+    .detailsRowCheck {
+      opacity: 1;
+    }
+  }
+
+  .ms-Fabric--isFocusVisible &:focus .detailsRowCheck {
+    opacity: 1;
+  }
+
+  &.compact {
+    border-bottom: 0;
+  }
+
+  &.isSelected {
+    color: $selectedMetaText;
+    background: $selectedBackground;
+    border-bottom: 1px solid $ms-color-white;
+    &:before {
+      position: absolute;
+      display: block;
+      top: -1;
+      height: 1;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      content: '';
+      border-top: 1px solid $ms-color-white;
+    }
+
+    // Selected State hover
+    &:hover {
+      background: $selectedHoverBackground;
+      color: $selectedHoverMetaText;
+
+      // Selected State hover meta cell
+      .cell {
+        @include high-contrast {
+          color: HighlightText;
+
+          > a {
+            color: HighlightText;
+          }
+        }
+
+        // Selected State hover Header cell
+        .isRowHeader {
+          color: $selectedHoverHeaderText;
+          @include high-contrast {
+            color: HighlightText;
+          }
+        }
+
+        // Ensure high-contrast mode overrides default hover background
+        @include high-contrast {
+          background: Highlight;
+        }
+      }
+
+      // Focus state
+      &:focus {
+        background: $focusBackground;
+
+        // Selected State hover meta cell
+        .cell {
+          color: $focusMetaText;
+          @include high-contrast {
+            color: HighlightText;
+
+            > a {
+              color: HighlightText;
+            }
+          }
+        }
+
+        // Row header cell
+        .isRowHeader {
+          color: $focusHeaderText;
+          @include high-contrast {
+            color: HighlightText;
+          }
+        }
+
+        // Ensure high-contrast mode overrides default focus background
+        @include high-contrast {
+          background: Highlight;
+        }
+      }
+
+      @include high-contrast {
+        background: Highlight;
+        color: HighlightText;
+        --ms-high-contrast-adjust: none;
+
+        a {
+          color: HighlightText;
+        }
+      }
+
+      // Focus and hover state
+      &:focus:hover {
+        background: $focusHoverBackground;
+      }
+    }
+  }
+
+  // TODO: focus style
+}
+
+.cell {
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: $rowVerticalPadding * 1px;
+  padding-bottom: $rowVerticalPadding * 1px;
+  padding-left: $cellLeftPadding * 1px;
+
+  font-size: $ms-font-size-s;
+  user-select: none;
+  cursor: default;
+
+  .compact & {
+    padding-top: $compactRowVerticalPadding * 1px;
+    padding-bottom: $compactRowVerticalPadding * 1px;
+  }
+
+  &.cellUnpadded {
+    padding-right: $cellRightPadding * 1px;
+  }
+
+  &.cellPadded {
+    padding-right: ($cellExtraRightPadding + $cellRightPadding) * 1px;
+
+    &.checkCell {
+      padding-right: 0;
+    }
+  }
+}
+
+.lastCell {
+  flex-grow: 1;
+}
+
+.isRowHeader {
+  color: $defaultHeaderText;
+  font-size: $ms-font-size-m;
+
+  .isSelected & {
+    color: $selectedHeaderText;
+    font-weight: $ms-font-weight-semibold;
+
+    @include high-contrast {
+      color: HighlightText;
+    }
+  }
+}
+
+.checkCell {
+  font-weight: normal;
+}
+
+.detailsRowCheck {
+  font-size: $ms-font-size-s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  box-sizing: border-box;
+  vertical-align: top;
+  background: none;
+  background-color: transparent;
+  border: none;
+  opacity: 0;
+  height: $rowHeight * 1px;
+  width: $cellCheckWidth * 1px;
+  padding: 0;
+  margin: 0;
+
+  .compact & {
+    height: $compactRowHeight * 1px;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.isCheckVisible {
+    opacity: 1;
+  }
+}
+
+.checkCover {
+  position: absolute;
+  top: -1;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: none;
+
+  .anySelected & {
+    display: 'block';
+  }
+}
+
+.fontIcon {
+  display: inline-block;
+  font-family: 'FabricMDL2Icons';
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+}
