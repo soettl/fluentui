@@ -1,0 +1,46 @@
+@import '~office-ui-fabric-react/src/common/common';
+
+.root {
+  position: relative;
+  cursor: default;
+}
+
+.dragMask {
+  position: absolute;
+  background: rgba(255, 0, 0, 0);
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  @include high-contrast {
+    background: none;
+    background-color: transparent;
+  }
+}
+
+.box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid $ms-color-themePrimary;
+  pointer-events: none;
+  z-index: 10;
+  @include high-contrast {
+    border-color: Highlight;
+  }
+}
+
+.boxFill {
+  position: absolute;
+  box-sizing: border-box;
+  background-color: $ms-color-themePrimary;
+  opacity: 0.1;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  @include high-contrast {
+    background: none;
+    background-color: transparent;
+  }
+}
