@@ -148,7 +148,8 @@ export const SimpleDetailsRow: React.FunctionComponent<IDetailsRowBaseProps> = R
       prevProps.cellsByColumn === nextProps.cellsByColumn &&
       prevProps.selectionMode === nextProps.selectionMode &&
       prevProps.checkboxVisibility === nextProps.checkboxVisibility &&
-      prevProps.style === nextProps.style
+      prevProps.style === nextProps.style &&
+      prevProps.compact === nextProps.compact
     );
   }
 );
@@ -177,7 +178,7 @@ function renderCheckbox(props: IDetailsRowCheckProps): JSX.Element | null {
       <DetailsRowCheck checked={selected} />
     </div>
   ) : (
-    <div {...buttonProps} className={css(RowStyles.check)} />
+    <div {...buttonProps} className={css(RowStyles.detailsRowCheck)} />
   );
 }
 

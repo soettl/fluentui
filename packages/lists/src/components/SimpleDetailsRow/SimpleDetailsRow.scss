@@ -65,8 +65,10 @@ $compactRowHeight: 32;
     }
   }
 
-  .ms-Fabric--isFocusVisible &:focus .detailsRowCheck {
-    opacity: 1;
+  :global(.ms-Fabric--isFocusVisible) {
+    &:focus .detailsRowCheck {
+      opacity: 1;
+    }
   }
 
   &.compact {
