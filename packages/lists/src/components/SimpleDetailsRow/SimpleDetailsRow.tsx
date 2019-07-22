@@ -69,7 +69,6 @@ export const SimpleDetailsRow: React.FunctionComponent<IDetailsRowBaseProps> = R
     const ariaSelected = selectionMode === SelectionMode.none ? undefined : isSelected;
 
     return (
-      // TODO: do we need hidden checkbox cover?
       <div
         className={css(
           RowStyles.root,

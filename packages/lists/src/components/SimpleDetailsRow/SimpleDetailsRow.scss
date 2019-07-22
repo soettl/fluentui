@@ -82,8 +82,8 @@ $compactRowHeight: 32;
     &:before {
       position: absolute;
       display: block;
-      top: -1;
-      height: 1;
+      top: -1px;
+      height: 1px;
       bottom: 0;
       left: 0;
       right: 0;
@@ -258,14 +258,14 @@ $compactRowHeight: 32;
 
 .checkCover {
   position: absolute;
-  top: -1;
+  top: -1px;
   left: 0;
   bottom: 0;
   right: 0;
   display: none;
 
   .anySelected & {
-    display: 'block';
+    display: block;
   }
 }
 
