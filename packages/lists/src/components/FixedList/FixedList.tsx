@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ScrollDirection, Axis } from '../Viewport/Viewport.types';
-import { IFixedListProps, ItemRange } from './FixedList.types';
+import { IFixedListProps, ItemRange, ItemRangeIndex } from './FixedList.types';
 
 const MIN_OVERSCAN_COUNT = 1;
 const TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING = 1;
@@ -28,14 +28,23 @@ function getVisibleItemRange(props: IFixedListProps): ItemRange {
  * @param props The FixedList props
  * @return The currently visible range of items plus overscan
  */
-function getMaterializedItemRanges(props: IFixedListProps, visibleRange: ItemRange): ItemRange[] {
-  const { viewportState, overscanHeight, itemHeight, itemCount, onGetMaterializedRanges } = props;
+function getMaterializedItemRanges(
+  props: IFixedListProps,
+  visibleRange: ItemRange
+): {
+  materializedItemRanges: ItemRange[];
+  materializedItemsCount: number;
+  materializedRange: ItemRange;
+  focusedRange?: ItemRange;
+} {
+  const { viewportState, overscanRatio, itemHeight, viewportHeight, itemCount, onGetMaterializedRanges } = props;
 
   const { isScrolling, scrollDirection } = viewportState;
 
   // Add item overscan. Inspired by react-window, we overscan in a given direction only when the user is not scrolling or
   // when the overscan direction equals the scroll direction.
   // https://github.com/bvaughn/react-window/blob/729f621fb0b127ecec8ce71e1d0952920006658c/src/createListComponent.js#L506
+  const overscanHeight = overscanRatio * viewportHeight;
   const overscanCount = Math.max(Math.ceil(overscanHeight / itemHeight), MIN_OVERSCAN_COUNT);
   const overscanBehind =
     !isScrolling || scrollDirection[Axis.Y] === ScrollDirection.backward ? overscanCount : TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING;
@@ -44,41 +53,51 @@ function getMaterializedItemRanges(props: IFixedListProps, visibleRange: ItemRan
 
   const [startIndex, endIndex] = visibleRange;
 
-  const materializedRange: ItemRange = [Math.max(0, startIndex - overscanBehind), Math.min(itemCount, endIndex + overscanAhead)];
-  let materializedRanges: ItemRange[] | undefined;
+  let materializedRange: ItemRange = [Math.max(0, startIndex - overscanBehind), Math.min(itemCount, endIndex + overscanAhead)];
+  let focusedRange: ItemRange | undefined;
 
   // Modify materialized ranges (e.g. for currently focused item that is out of view)
   if (onGetMaterializedRanges) {
-    materializedRanges = onGetMaterializedRanges({
+    ({ materializedRange, focusedRange } = onGetMaterializedRanges({
       visibleRange,
       materializedRange
-    });
-  } else {
-    materializedRanges = [materializedRange];
+    }));
+
+    if (focusedRange) {
+      // Merge ranges
+      if (
+        focusedRange[ItemRangeIndex.endIndex] >= materializedRange[ItemRangeIndex.startIndex] - 1 ||
+        focusedRange[ItemRangeIndex.startIndex] <= materializedRange[ItemRangeIndex.endIndex] + 1
+      ) {
+        materializedRange = [
+          Math.min(focusedRange[ItemRangeIndex.startIndex], materializedRange[ItemRangeIndex.startIndex]),
+          Math.max(focusedRange[ItemRangeIndex.endIndex], materializedRange[ItemRangeIndex.endIndex])
+        ];
+      } else {
+        return {
+          materializedItemRanges:
+            focusedRange[ItemRangeIndex.startIndex] < materializedRange[ItemRangeIndex.startIndex]
+              ? [focusedRange, materializedRange]
+              : [materializedRange, focusedRange],
+          materializedItemsCount: materializedRange[ItemRangeIndex.endIndex] - materializedRange[ItemRangeIndex.startIndex],
+          focusedRange,
+          materializedRange
+        };
+      }
+    }
   }
 
-  return materializedRanges;
-}
-
-/**
- * Calculates the number of materialized items given the array of materialized ranges.
- * Used to create an array of the correct size when rendering the materialized items.
- * @param props The FixedList props
- */
-function getMaterializedItemsCount(materializedRanges: ItemRange[]): number {
-  let materializedItemsCount = 0;
-
-  for (const materializedRange of materializedRanges) {
-    const [startIndex, endIndex] = materializedRange;
-
-    materializedItemsCount += endIndex - startIndex;
-  }
-
-  return materializedItemsCount;
+  return {
+    materializedItemRanges: [materializedRange],
+    materializedItemsCount: materializedRange[ItemRangeIndex.endIndex] - materializedRange[ItemRangeIndex.startIndex],
+    focusedRange,
+    materializedRange
+  };
 }
 
 // tslint:disable-next-line:no-any
 function useCache<T>(deps?: any[]): Map<string, T> {
+  const [, setUpdateCount] = React.useState(0);
   const cache = React.useRef<{ initialized: boolean; items: Map<string, T> | undefined }>({
     initialized: false,
     items: undefined
@@ -87,9 +106,11 @@ function useCache<T>(deps?: any[]): Map<string, T> {
     cache.current.items = new Map<string, T>();
   }
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (cache.current.initialized) {
       cache.current.items!.clear();
+
+      setUpdateCount(Math.random());
     }
 
     cache.current.initialized = true;
@@ -108,29 +129,35 @@ export const FixedList = React.memo((props: IFixedListProps) => {
     onRenderItem,
     viewportState,
     viewportHeight,
-    overscanHeight,
+    overscanRatio,
     surfaceTop,
     onItemsRendered,
+    onRenderListSurface,
     enableHardwareAccelleration = true
   } = props;
   const { isScrolling } = viewportState;
 
   const visibleItemRange = getVisibleItemRange(props);
-  const materializedItemRanges = getMaterializedItemRanges(props, visibleItemRange);
-  const materializedItemsCount = getMaterializedItemsCount(materializedItemRanges);
+  const {
+    materializedItemRanges,
+    materializedItemsCount,
+    materializedRange: materializedItemRange,
+    focusedRange
+  } = getMaterializedItemRanges(props, visibleItemRange);
 
   React.useEffect(() => {
     if (onItemsRendered) {
       onItemsRendered({
         visibleRange: visibleItemRange,
-        materializedRanges: materializedItemRanges
+        materializedRange: materializedItemRange,
+        focusedRange
       });
     }
   });
 
   const children = new Array(materializedItemsCount);
 
-  const itemStyleCache = useCache<React.CSSProperties>([viewportHeight, overscanHeight, itemHeight, surfaceTop]);
+  const itemStyleCache = useCache<React.CSSProperties>([viewportHeight, overscanRatio, itemHeight, surfaceTop]);
 
   let childIndex = 0;
   for (const materializedRange of materializedItemRanges) {
@@ -149,7 +176,7 @@ export const FixedList = React.memo((props: IFixedListProps) => {
           // enable smooth transitions if an element's position changes
           transform: enableHardwareAccelleration ? `translate(0, ${i * itemHeight}px)` : undefined,
 
-          top: !enableHardwareAccelleration ? i * itemHeight : undefined
+          top: !enableHardwareAccelleration ? i * itemHeight : 0
         };
 
         itemStyleCache.set(itemStyleKey, itemStyle);
@@ -173,5 +200,10 @@ export const FixedList = React.memo((props: IFixedListProps) => {
     pointerEvents: isScrolling ? 'none' : undefined
   };
 
-  return <div style={style}>{children}</div>; // tslint:disable-line:jsx-ban-props
+  let render: React.ReactNode = <div style={style}>{children}</div>; // tslint:disable-line:jsx-ban-props
+  if (onRenderListSurface) {
+    render = onRenderListSurface({ style, children });
+  }
+
+  return render as JSX.Element;
 });

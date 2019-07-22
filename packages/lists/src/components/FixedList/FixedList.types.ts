@@ -10,7 +10,8 @@ export enum ItemRangeIndex {
   endIndex = 1
 }
 
-export type OnGetMaterializedRangesCallback = (props: { visibleRange: ItemRange; materializedRange: ItemRange }) => ItemRange[];
+export type OnGetMaterializedRangesCallbackProps = { visibleRange: ItemRange; materializedRange: ItemRange };
+export type OnGetMaterializedRangesCallback = (props: OnGetMaterializedRangesCallbackProps) => IMaterializedItemRange;
 
 export interface IOnRenderItemProps {
   index: number;
@@ -19,7 +20,18 @@ export interface IOnRenderItemProps {
 
 export interface IOnItemsRenderedProps {
   visibleRange: ItemRange;
-  materializedRanges: ItemRange[];
+  materializedRange: ItemRange;
+  focusedRange?: ItemRange;
+}
+
+export interface IOnRenderListSurfaceProps {
+  style: React.CSSProperties;
+  children: React.ReactNode;
+}
+
+export interface IMaterializedItemRange {
+  materializedRange: ItemRange;
+  focusedRange?: ItemRange;
 }
 
 export interface IFixedListProps {
@@ -56,7 +68,8 @@ export interface IFixedListProps {
   /**
    * The height of item overscan before and after the visible area of the viewport.
    */
-  overscanHeight: number;
+  overscanRatio: number;
+  scrollOverscanRatio?: number;
 
   /**
    * Callback used to render an item with the given index.
@@ -72,4 +85,6 @@ export interface IFixedListProps {
   onGetMaterializedRanges?: OnGetMaterializedRangesCallback;
 
   enableHardwareAccelleration?: boolean;
+
+  onRenderListSurface?: (props: IOnRenderListSurfaceProps) => React.ReactNode;
 }
