@@ -1,22 +1,22 @@
 import * as React from 'react';
-import { ScrollDirection, Axis } from '../Viewport/Viewport.types';
+import { ScrollDirection, Axis } from '../ScrollContainer/ScrollContainer.types';
 import { IFixedListProps, ItemRange, ItemRangeIndex } from './FixedList.types';
 
 const MIN_OVERSCAN_COUNT = 1;
 const TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING = 1;
 
 /**
- * Calculates the currently visible range of items based on the viewport state.
+ * Calculates the currently visible range of items based on the scrollContainer state.
  * @param props The FixedList props
  * @return The currently visible range of items
  */
 function getVisibleItemRange(props: IFixedListProps): ItemRange {
-  const { surfaceTop, itemHeight, viewportState, viewportHeight, itemCount } = props;
+  const { surfaceTop, itemHeight, scrollContainerState, scrollContainerHeight, itemCount } = props;
 
-  const scrollTop = viewportState.scrollDistance[Axis.Y] - surfaceTop;
+  const scrollTop = scrollContainerState.scrollDistance[Axis.Y] - surfaceTop;
 
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight));
-  const endIndex = Math.min(itemCount, Math.ceil((scrollTop + viewportHeight) / itemHeight) + 1);
+  const endIndex = Math.min(itemCount, Math.ceil((scrollTop + scrollContainerHeight) / itemHeight) + 1);
 
   return [startIndex, endIndex];
 }
@@ -37,14 +37,14 @@ function getMaterializedItemRanges(
   materializedRange: ItemRange;
   focusedRange?: ItemRange;
 } {
-  const { viewportState, overscanRatio, itemHeight, viewportHeight, itemCount, onGetMaterializedRanges } = props;
+  const { scrollContainerState, overscanRatio, itemHeight, scrollContainerHeight, itemCount, onGetMaterializedRanges } = props;
 
-  const { isScrolling, scrollDirection } = viewportState;
+  const { isScrolling, scrollDirection } = scrollContainerState;
 
   // Add item overscan. Inspired by react-window, we overscan in a given direction only when the user is not scrolling or
   // when the overscan direction equals the scroll direction.
   // https://github.com/bvaughn/react-window/blob/729f621fb0b127ecec8ce71e1d0952920006658c/src/createListComponent.js#L506
-  const overscanHeight = overscanRatio * viewportHeight;
+  const overscanHeight = overscanRatio * scrollContainerHeight;
   const overscanCount = Math.max(Math.ceil(overscanHeight / itemHeight), MIN_OVERSCAN_COUNT);
   const overscanBehind =
     !isScrolling || scrollDirection[Axis.Y] === ScrollDirection.backward ? overscanCount : TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING;
@@ -127,15 +127,15 @@ export const FixedList = React.memo((props: IFixedListProps) => {
     itemCount,
     itemHeight,
     onRenderItem,
-    viewportState,
-    viewportHeight,
+    scrollContainerState,
+    scrollContainerHeight,
     overscanRatio,
     surfaceTop,
     onItemsRendered,
     onRenderListSurface,
     enableHardwareAccelleration = true
   } = props;
-  const { isScrolling } = viewportState;
+  const { isScrolling } = scrollContainerState;
 
   const visibleItemRange = getVisibleItemRange(props);
   const {
@@ -157,7 +157,7 @@ export const FixedList = React.memo((props: IFixedListProps) => {
 
   const children = new Array(materializedItemsCount);
 
-  const itemStyleCache = useCache<React.CSSProperties>([viewportHeight, overscanRatio, itemHeight, surfaceTop]);
+  const itemStyleCache = useCache<React.CSSProperties>([scrollContainerHeight, overscanRatio, itemHeight, surfaceTop]);
 
   let childIndex = 0;
   for (const materializedRange of materializedItemRanges) {

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useDebouncedTimeout } from './useDebouncedTimeout';
 import { usePreviousValueRef } from './usePreviousValue';
 
-import { Vector2D, ScrollDirection, Axis, IViewportProps, IViewportState } from './Viewport.types';
+import { Vector2D, ScrollDirection, Axis, IScrollContainerProps, IScrollContainerState } from './ScrollContainer.types';
 import { useDebouncedScroll } from './useDebouncedScroll';
 
 const SCROLL_DISTANCE_ORIGIN: Vector2D<number> = [0, 0];
@@ -28,47 +28,47 @@ function getScrollDirection(scrollDistance: number, prevScrollDistance: number):
 }
 
 /**
- * Viewport represents a scrollable container that maintains information about its current scroll state.
+ * ScrollContainer represents a scrollable container that maintains information about its current scroll state.
  * The component takes a function component as its child component, using the current scroll state as its only argument.
  *
  * Note: The caller may wish to wrap this component with React.memo, in case they make sure that the 'children' function
  * doesn't mutate on every render.
  */
-export const Viewport = (props: IViewportProps): JSX.Element => {
+export const ScrollContainer = (props: IScrollContainerProps): JSX.Element => {
   const { height, width, children, enableHardwareAccelleration = true } = props;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const [viewportState, setViewportState] = useState<IViewportState>({
+  const [scrollContainerState, setScrollContainerState] = useState<IScrollContainerState>({
     isScrolling: false,
     scrollDistance: SCROLL_DISTANCE_ORIGIN,
     scrollDirection: NO_SCROLL_DIRECTION
   });
-  const prevViewportStateRef = usePreviousValueRef(viewportState);
+  const prevScrollContainerStateRef = usePreviousValueRef(scrollContainerState);
 
   const [scheduleStoppedScrollingTimeout, clearStoppedScrollingTimeout] = useDebouncedTimeout(() => {
-    setViewportState((currentViewportState: IViewportState) => {
+    setScrollContainerState((currentScrollContainerState: IScrollContainerState) => {
       return {
         isScrolling: false,
-        scrollDistance: currentViewportState.scrollDistance,
+        scrollDistance: currentScrollContainerState.scrollDistance,
         scrollDirection: NO_SCROLL_DIRECTION
       };
     });
   }, STOPPED_SCROLLING_TIMEOUT_IN_MILLISECONDS);
 
   const [onDebouncedScroll, clearOnDebouncedScroll] = useDebouncedScroll((scrollX: number, scrollY: number) => {
-    const prevViewportState = prevViewportStateRef.current;
+    const prevScrollContainerState = prevScrollContainerStateRef.current;
 
     const scrollDirectionX = getScrollDirection(
       scrollX,
-      (prevViewportState && prevViewportState.scrollDistance[Axis.X]) || SCROLL_DISTANCE_ORIGIN[Axis.X]
+      (prevScrollContainerState && prevScrollContainerState.scrollDistance[Axis.X]) || SCROLL_DISTANCE_ORIGIN[Axis.X]
     );
     const scrollDirectionY = getScrollDirection(
       scrollY,
-      (prevViewportState && prevViewportState.scrollDistance[Axis.Y]) || SCROLL_DISTANCE_ORIGIN[Axis.Y]
+      (prevScrollContainerState && prevScrollContainerState.scrollDistance[Axis.Y]) || SCROLL_DISTANCE_ORIGIN[Axis.Y]
     );
 
-    setViewportState({
+    setScrollContainerState({
       isScrolling: true,
       scrollDistance: [scrollX, scrollY],
       scrollDirection: [scrollDirectionX, scrollDirectionY]
@@ -97,7 +97,7 @@ export const Viewport = (props: IViewportProps): JSX.Element => {
   }, []);
 
   const style: React.CSSProperties = {
-    position: 'relative',
+    position: 'relative', // TODO: do we have perf benefits setting this to 'absolute'?
     height,
     width,
     overflow: 'auto',
@@ -114,7 +114,7 @@ export const Viewport = (props: IViewportProps): JSX.Element => {
       data-is-scrollable={true} // some Fabric components need this to detect their parent scroll container more efficiently
       style={style} // tslint:disable-line:jsx-ban-props
     >
-      {children(viewportState)}
+      {children(scrollContainerState)}
     </div>
   );
 };

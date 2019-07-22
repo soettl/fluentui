@@ -1,4 +1,4 @@
-import { IViewportState } from '../Viewport/Viewport.types';
+import { IScrollContainerState } from '../ScrollContainer/ScrollContainer.types';
 
 /**
  * Type representing an item range, where the first element is the start index (inclusive)
@@ -46,27 +46,27 @@ export interface IFixedListProps {
   itemHeight: number;
 
   /**
-   * The current viewport state.
+   * The current scrollContainer state.
    */
-  viewportState: IViewportState;
+  scrollContainerState: IScrollContainerState;
 
   /**
-   * The height of the viewport this list is mounted in.
+   * The height of the scrollContainer this list is mounted in.
    */
-  viewportHeight: number;
+  scrollContainerHeight: number;
 
   /**
-   * The width of the viewport this list is mounted in.
+   * The width of the scrollContainer this list is mounted in.
    */
-  viewportWidth: number;
+  scrollContainerWidth: number;
 
   /**
-   * The distance of the top of the viewport surface to the top of the list surface.
+   * The distance of the top of the scrollContainer surface to the top of the list surface.
    */
   surfaceTop: number;
 
   /**
-   * The height of item overscan before and after the visible area of the viewport.
+   * The height of item overscan before and after the visible area of the scrollContainer.
    */
   overscanRatio: number;
   scrollOverscanRatio?: number;

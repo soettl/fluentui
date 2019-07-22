@@ -11,7 +11,7 @@ export enum ScrollDirection {
   forward
 }
 
-export interface IViewportState {
+export interface IScrollContainerState {
   /**
    * Whether the user is currently scrolling.
    */
@@ -30,7 +30,7 @@ export interface IViewportState {
   scrollDirection: Vector2D<ScrollDirection>;
 }
 
-export interface IViewportProps {
+export interface IScrollContainerProps {
   /**
    * The height of the scroll container (in pixels).
    */
@@ -44,7 +44,7 @@ export interface IViewportProps {
   /**
    * The child component is a function component which receives the scroll container's current scroll state as its only argument.
    */
-  children: (viewportState: IViewportState) => JSX.Element[] | JSX.Element;
+  children: (scrollContainerState: IScrollContainerState) => JSX.Element[] | JSX.Element;
 
   enableHardwareAccelleration?: boolean;
 }
