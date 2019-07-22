@@ -34,7 +34,7 @@ export interface IMaterializedItemRange {
   focusedRange?: ItemRange;
 }
 
-export interface IFixedListProps {
+export interface IEqualItemSizeListProps {
   /**
    * The total number of items contained in the list.
    */

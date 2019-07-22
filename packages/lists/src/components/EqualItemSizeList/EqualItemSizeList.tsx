@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { ScrollDirection, Axis } from '../ScrollContainer/ScrollContainer.types';
-import { IFixedListProps, ItemRange, ItemRangeIndex } from './FixedList.types';
+import { IEqualItemSizeListProps, ItemRange, ItemRangeIndex } from './EqualItemSizeList.types';
 
 const MIN_OVERSCAN_COUNT = 1;
 const TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING = 1;
 
 /**
  * Calculates the currently visible range of items based on the scrollContainer state.
- * @param props The FixedList props
+ * @param props The EqualItemSizeList props
  * @return The currently visible range of items
  */
-function getVisibleItemRange(props: IFixedListProps): ItemRange {
+function getVisibleItemRange(props: IEqualItemSizeListProps): ItemRange {
   const { surfaceTop, itemHeight, scrollContainerState, scrollContainerHeight, itemCount } = props;
 
   const scrollTop = scrollContainerState.scrollDistance[Axis.Y] - surfaceTop;
@@ -22,14 +22,14 @@ function getVisibleItemRange(props: IFixedListProps): ItemRange {
 }
 
 /**
- * Calculates the materialized range of items based on the visible range. Consumers of FixedList can provide
+ * Calculates the materialized range of items based on the visible range. Consumers of EqualItemSizeList can provide
  * a callback to add and modify the calculated materialized range, for example in order to always render
  * a focused item, no matter whether it is currently in view or not.
- * @param props The FixedList props
+ * @param props The EqualItemSizeList props
  * @return The currently visible range of items plus overscan
  */
 function getMaterializedItemRanges(
-  props: IFixedListProps,
+  props: IEqualItemSizeListProps,
   visibleRange: ItemRange
 ): {
   materializedItemRanges: ItemRange[];
@@ -122,7 +122,7 @@ function useCache<T>(deps?: any[]): Map<string, T> {
 /**
  * A simple virtualized List component which assumes that all its items have the same height.
  */
-export const FixedList = React.memo((props: IFixedListProps) => {
+export const EqualItemSizeList = React.memo((props: IEqualItemSizeListProps) => {
   const {
     itemCount,
     itemHeight,
