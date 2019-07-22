@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ScrollDirection, Axis } from '../ScrollContainer/ScrollContainer.types';
-import { IEqualItemSizeListProps, ItemRange, ItemRangeIndex } from './EqualItemSizeList.types';
+import { IEqualItemSizeListProps } from './EqualItemSizeList.types';
+import { ItemRange, ItemRangeIndex, IListProps } from './List.types';
 
 const MIN_OVERSCAN_COUNT = 1;
 const TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING = 1;
@@ -10,13 +11,13 @@ const TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING = 1;
  * @param props The EqualItemSizeList props
  * @return The currently visible range of items
  */
-function getVisibleItemRange(props: IEqualItemSizeListProps): ItemRange {
-  const { surfaceTop, itemHeight, scrollContainerState, scrollContainerHeight, itemCount } = props;
+function getVisibleItemRange(props: IListProps & IEqualItemSizeListProps): ItemRange {
+  const { surfaceOffset, itemSize, scrollContainerState, scrollContainerHeight, itemCount } = props;
 
-  const scrollTop = scrollContainerState.scrollDistance[Axis.Y] - surfaceTop;
+  const scrollTop = scrollContainerState.scrollDistance[Axis.Y] - surfaceOffset;
 
-  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight));
-  const endIndex = Math.min(itemCount, Math.ceil((scrollTop + scrollContainerHeight) / itemHeight) + 1);
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemSize));
+  const endIndex = Math.min(itemCount, Math.ceil((scrollTop + scrollContainerHeight) / itemSize) + 1);
 
   return [startIndex, endIndex];
 }
@@ -29,7 +30,7 @@ function getVisibleItemRange(props: IEqualItemSizeListProps): ItemRange {
  * @return The currently visible range of items plus overscan
  */
 function getMaterializedItemRanges(
-  props: IEqualItemSizeListProps,
+  props: IListProps & IEqualItemSizeListProps,
   visibleRange: ItemRange
 ): {
   materializedItemRanges: ItemRange[];
@@ -37,7 +38,7 @@ function getMaterializedItemRanges(
   materializedRange: ItemRange;
   focusedRange?: ItemRange;
 } {
-  const { scrollContainerState, overscanRatio, itemHeight, scrollContainerHeight, itemCount, onGetMaterializedRanges } = props;
+  const { scrollContainerState, overscanRatio, itemSize, scrollContainerHeight, itemCount, onGetMaterializedRanges } = props;
 
   const { isScrolling, scrollDirection } = scrollContainerState;
 
@@ -45,7 +46,7 @@ function getMaterializedItemRanges(
   // when the overscan direction equals the scroll direction.
   // https://github.com/bvaughn/react-window/blob/729f621fb0b127ecec8ce71e1d0952920006658c/src/createListComponent.js#L506
   const overscanHeight = overscanRatio * scrollContainerHeight;
-  const overscanCount = Math.max(Math.ceil(overscanHeight / itemHeight), MIN_OVERSCAN_COUNT);
+  const overscanCount = Math.max(Math.ceil(overscanHeight / itemSize), MIN_OVERSCAN_COUNT);
   const overscanBehind =
     !isScrolling || scrollDirection[Axis.Y] === ScrollDirection.backward ? overscanCount : TRAILING_OVERSCAN_COUNT_WHILE_SCROLLING;
   const overscanAhead =
@@ -120,17 +121,17 @@ function useCache<T>(deps?: any[]): Map<string, T> {
 }
 
 /**
- * A simple virtualized List component which assumes that all its items have the same height.
+ * A simple virtualized List component which assumes that all its items have the same size.
  */
-export const EqualItemSizeList = React.memo((props: IEqualItemSizeListProps) => {
+export const EqualItemSizeList = React.memo((props: IListProps & IEqualItemSizeListProps) => {
   const {
     itemCount,
-    itemHeight,
+    itemSize,
     onRenderItem,
     scrollContainerState,
     scrollContainerHeight,
     overscanRatio,
-    surfaceTop,
+    surfaceOffset,
     onItemsRendered,
     onRenderListSurface,
     enableHardwareAccelleration = true
@@ -157,7 +158,7 @@ export const EqualItemSizeList = React.memo((props: IEqualItemSizeListProps) => 
 
   const children = new Array(materializedItemsCount);
 
-  const itemStyleCache = useCache<React.CSSProperties>([scrollContainerHeight, overscanRatio, itemHeight, surfaceTop]);
+  const itemStyleCache = useCache<React.CSSProperties>([scrollContainerHeight, overscanRatio, itemSize, surfaceOffset]);
 
   let childIndex = 0;
   for (const materializedRange of materializedItemRanges) {
@@ -170,13 +171,13 @@ export const EqualItemSizeList = React.memo((props: IEqualItemSizeListProps) => 
         itemStyle = {
           position: 'absolute',
           width: '100%',
-          height: `${itemHeight}px`,
+          height: `${itemSize}px`,
 
           // Use a 'translate' transformation instead of positioning via 'top' in order to use GPU accelleration and to
           // enable smooth transitions if an element's position changes
-          transform: enableHardwareAccelleration ? `translate(0, ${i * itemHeight}px)` : undefined,
+          transform: enableHardwareAccelleration ? `translate(0, ${i * itemSize}px)` : undefined,
 
-          top: !enableHardwareAccelleration ? i * itemHeight : 0
+          top: !enableHardwareAccelleration ? i * itemSize : 0
         };
 
         itemStyleCache.set(itemStyleKey, itemStyle);
@@ -193,8 +194,9 @@ export const EqualItemSizeList = React.memo((props: IEqualItemSizeListProps) => 
 
   const style: React.CSSProperties = {
     position: 'relative',
-    height: `${itemCount * itemHeight}px`,
+    height: `${itemCount * itemSize}px`,
     width: '100%',
+    top: surfaceOffset,
 
     // Similar to react-window, we disable pointer events while scrolling to improve perf
     pointerEvents: isScrolling ? 'none' : undefined
