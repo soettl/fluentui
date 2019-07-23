@@ -67,7 +67,7 @@ function getMaterializedItemRanges(
     if (focusedRange) {
       // Merge ranges
       if (
-        focusedRange[ItemRangeIndex.endIndex] >= materializedRange[ItemRangeIndex.startIndex] - 1 ||
+        focusedRange[ItemRangeIndex.endIndex] >= materializedRange[ItemRangeIndex.startIndex] - 1 &&
         focusedRange[ItemRangeIndex.startIndex] <= materializedRange[ItemRangeIndex.endIndex] + 1
       ) {
         materializedRange = [
@@ -193,7 +193,7 @@ export const EqualItemSizeList = React.memo((props: IListProps & IEqualItemSizeL
   }
 
   const style: React.CSSProperties = {
-    position: 'relative',
+    position: 'absolute',
     height: `${itemCount * itemSize}px`,
     width: '100%',
     top: surfaceOffset,
