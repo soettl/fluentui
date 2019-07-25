@@ -13,6 +13,12 @@ export const AppDefinition: IAppDefinition = {
           key: 'DetailsList',
           name: 'DetailsList',
           url: '#/examples/detailslist'
+        },
+        {
+          component: require<any>('../components/LegacyDetailsList/DetailsListPage').DetailsListPage,
+          key: 'LegacyDetailsList',
+          name: 'LegacyDetailsList',
+          url: '#/examples/legacydetailslist'
         }
       ]
     }
